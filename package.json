@@ -1,0 +1,14 @@
+{
+  "name": "project-1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon src/app.js"
+  },
+  "author": "Apurva Muthaye",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
