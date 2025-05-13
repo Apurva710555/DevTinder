@@ -1,17 +1,44 @@
 const express = require("express");
 const connectDb = require("./config/database");
 const User = require("./models/user");
+const validateRequest = require("./utils/validation");
+const bcrypt = require("bcrypt");
 const app = express();
 
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
   try {
-    const user = new User(req.body);
+    validateRequest(req);
+    const {
+      firstName,
+      lastName,
+      emailId,
+      password,
+      age,
+      gender,
+      skills,
+      Bio,
+      Image,
+    } = req.body;
+
+    const hashPass = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      firstName: firstName,
+      lastName: lastName,
+      emailId: emailId,
+      password: hashPass,
+      age: age,
+      gender: gender,
+      skills: skills,
+      Bio: Bio,
+      Image: Image,
+    });
     await user.save();
     res.send("Data inserted Successfully");
   } catch (err) {
-    res.status(500).send(`Error saving the user: ${err.message}`);
+    res.status(500).send(`{ERROR} ${err.message}`);
   }
 });
 
@@ -26,14 +53,24 @@ app.get("/feed", async (req, res) => {
   }
 });
 
-app.get("/user", async (req, res) => {
+app.post("/login", async (req, res) => {
   try {
-    const users = await User.findOne({ emailId: req.body.emailId }).exec();
-    res.send(users);
+    const { emailId, password } = req.body;
+    if (!emailId || !password) {
+      throw new Error("Email and password are required.");
+    }
+    const users = await User.findOne({ emailId: emailId });
+    if (users == null) {
+      throw new Error("Invalid Credentials");
+    }
+    const isValidPass = await bcrypt.compare(password, users.password);
+    if (!isValidPass) {
+      throw new Error("Invalid Credentials");
+    } else {
+      res.send("Logged in successfully!");
+    }
   } catch (err) {
-    res
-      .status(500)
-      .send(`Error occured while fetching the user details: ${err.message}`);
+    res.status(500).send(`{Error} ${err.message}`);
   }
 });
 

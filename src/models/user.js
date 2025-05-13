@@ -16,6 +16,7 @@ const userSchema = new Schema(
     },
     lastName: {
       type: String,
+      required: true,
       minlength: 2,
       maxlength: 14,
       validate: (v) => {
@@ -67,7 +68,7 @@ const userSchema = new Schema(
     Image: {
       type: String,
       validate: (v) => {
-        if (!validator.isURL(v)) {
+        if (v && !validator.isURL(v)) {
           throw new Error("Not a valid Image");
         }
       },
