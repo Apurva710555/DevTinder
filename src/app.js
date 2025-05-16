@@ -85,8 +85,14 @@ app.post("/login/:userid", async (req, res) => {
     if (!isValidPass) {
       throw new Error("Invalid Credentials");
     } else {
-      var token = await jwt.sign({ _id: users._id }, "SHHH123");
-      res.cookie("token", token).send("Logged in successfully!");
+      var token = await jwt.sign({ _id: users._id }, "SHHH123", {
+        expiresIn: "7d",
+      });
+      res
+        .cookie("token", token, {
+          expires: new Date(Date.now() + 8 * 3600000),
+        })
+        .send("Logged in successfully!");
     }
   } catch (err) {
     res.status(500).send(`{Error} ${err.message}`);
