@@ -3,9 +3,14 @@ const connectDb = require("./config/database");
 const User = require("./models/user");
 const validateRequest = require("./utils/validation");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const { auth } = require("./middlewares/auth");
+var cookieParser = require("cookie-parser");
+
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.post("/signup", async (req, res) => {
   try {
@@ -44,6 +49,8 @@ app.post("/signup", async (req, res) => {
 
 app.get("/feed", async (req, res) => {
   try {
+    const { username, password } = req.query;
+    console.log(username + " " + password);
     const users = await User.find({});
     res.send(users);
   } catch (err) {
@@ -53,13 +60,24 @@ app.get("/feed", async (req, res) => {
   }
 });
 
-app.post("/login", async (req, res) => {
+app.get("/profile", auth, async (req, res) => {
+  try {
+    console.log(req.user);
+
+    res.send(`${req.user[0].firstName} is logged in!!`);
+  } catch (err) {
+    res.status(500).send(`{Error} ${err.message}`);
+  }
+});
+
+app.post("/login/:userid", async (req, res) => {
   try {
     const { emailId, password } = req.body;
     if (!emailId || !password) {
       throw new Error("Email and password are required.");
     }
     const users = await User.findOne({ emailId: emailId });
+
     if (users == null) {
       throw new Error("Invalid Credentials");
     }
@@ -67,7 +85,8 @@ app.post("/login", async (req, res) => {
     if (!isValidPass) {
       throw new Error("Invalid Credentials");
     } else {
-      res.send("Logged in successfully!");
+      var token = await jwt.sign({ _id: users._id }, "SHHH123");
+      res.cookie("token", token).send("Logged in successfully!");
     }
   } catch (err) {
     res.status(500).send(`{Error} ${err.message}`);
