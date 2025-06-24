@@ -7,7 +7,7 @@ const auth = async (req, res, next) => {
       throw new Error("token expired, please login again!");
     }
     var decoded = jwt.verify(cookie, "SHHH123");
-    const user = await User.find({ _id: decoded._id });
+    const user = await User.findOne({ _id: decoded._id });
     if (!user) {
       throw new Error("User not found");
     } else {

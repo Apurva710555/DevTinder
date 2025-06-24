@@ -46,4 +46,12 @@ const validateRequest = (req) => {
   if (age.length < 18) throw new Error("Not valid age.");
 };
 
-module.exports = validateRequest;
+const validateEditProfileData = (req) => {
+  const allowEditFields = ["firstName", "lastName", "gender", "age", "skills"];
+
+  const isValid = Object.keys(req.body).every((field) =>
+    allowEditFields.includes(field)
+  );
+  return isValid;
+};
+module.exports = { validateRequest, validateEditProfileData };
