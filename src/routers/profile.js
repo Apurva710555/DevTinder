@@ -3,6 +3,7 @@ const profileRouter = express.Router();
 const { auth } = require("../middlewares/auth");
 const User = require("../models/user");
 const { validateEditProfileData } = require("../utils/validation");
+const bcrypt = require("bcrypt");
 
 profileRouter.get("/profile", auth, async (req, res) => {
   try {
@@ -38,7 +39,29 @@ profileRouter.patch("/profile/edit", auth, async (req, res) => {
 
 profileRouter.patch("/profile/password", auth, async (req, res) => {
   try {
-    //logic to update the pass word
+    //check if the user is logged in
+    const { oldpassword, newpassword } = req.body;
+    if (!oldpassword || !newpassword) {
+      throw new Error("Invalid update password request");
+    }
+    const loggedInUser = req.user;
+    if (!loggedInUser) throw new Error("User not logged in");
+    const isValidPass = await bcrypt.compare(
+      oldpassword,
+      loggedInUser.password
+    );
+    if (!isValidPass) throw new Error("Old password doesn't match");
+    const hashPass = await bcrypt.hash(newpassword, 10);
+    loggedInUser.password = hashPass;
+    await loggedInUser.save();
+    res
+      .cookie("token", null, {
+        expires: new Date(Date.now()),
+      })
+      .json({
+        message: "Password Updated Successfully!",
+        data: loggedInUser,
+      });
   } catch (err) {
     res
       .status(500)
